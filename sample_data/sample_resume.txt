@@ -1,0 +1,24 @@
+Krish Powar
+krish@example.com | +1 555 010 1000
+
+SUMMARY
+Software engineer and machine learning enthusiast with experience building full-stack applications, REST APIs, and data-driven projects.
+
+SKILLS
+Python, JavaScript, React, Flask, SQL, Git, Docker, machine learning, scikit-learn, pandas, numpy, API, testing, Tailwind
+
+EXPERIENCE
+Software Engineering Intern, Northstar Labs
+- Built a Flask API for resume parsing and job matching.
+- Improved dashboard load time by 28 percent through API response caching.
+- Wrote unit tests for authentication and upload workflows.
+
+PROJECTS
+CareerPilot AI
+- Created a resume analyzer with ATS scoring, skill gap detection, charts, and PDF reports.
+
+EDUCATION
+B.S. Computer Science, Example University
+
+CERTIFICATIONS
+Google Machine Learning Crash Course

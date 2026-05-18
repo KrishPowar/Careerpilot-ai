@@ -1,0 +1,13 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+PyJWT==2.8.0
+Werkzeug==3.0.3
+python-dotenv==1.0.1
+spacy==3.7.5; python_version < "3.13"
+scikit-learn==1.5.1; python_version < "3.14"
+numpy==1.26.4; python_version < "3.14"
+PyPDF2==3.0.1
+python-docx==1.1.2
+reportlab==4.2.2
+requests==2.34.2
+gunicorn==22.0.0

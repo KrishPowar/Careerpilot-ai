@@ -1,0 +1,7 @@
+{
+  "targetRole": "Machine Learning Engineer",
+  "atsScore": 78,
+  "matchedSkills": ["python", "machine learning", "scikit-learn", "docker", "api"],
+  "missingSkills": ["tensorflow", "pytorch", "mlops", "model deployment"],
+  "recommendation": "Competitive. Add missing role skills and quantify more achievements."
+}
