@@ -10,8 +10,8 @@ const HOP_BY_HOP_HEADERS = new Set([
   "host",
   "content-length",
 ]);
-
-const { Readable } = require("node:stream");
+const http = require("node:http");
+const https = require("node:https");
 
 function getBackendBaseUrl() {
   const raw =
@@ -69,29 +69,47 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const upstream = await fetch(url, {
-      method: req.method,
-      headers,
-      body,
-      redirect: "manual",
+    const upstreamUrl = new URL(url);
+    const client = upstreamUrl.protocol === "https:" ? https : http;
+
+    const upstreamReq = client.request(
+      {
+        method: req.method,
+        hostname: upstreamUrl.hostname,
+        port: upstreamUrl.port || undefined,
+        path: `${upstreamUrl.pathname}${upstreamUrl.search}`,
+        headers: {
+          ...headers,
+          ...(body ? { "content-length": String(body.length) } : {}),
+        },
+      },
+      (upstreamRes) => {
+        res.statusCode = upstreamRes.statusCode || 502;
+
+        for (const [key, value] of Object.entries(upstreamRes.headers)) {
+          const lower = key.toLowerCase();
+          if (HOP_BY_HOP_HEADERS.has(lower)) continue;
+          if (lower === "set-cookie") continue;
+          if (typeof value === "undefined") continue;
+          res.setHeader(key, value);
+        }
+
+        upstreamRes.pipe(res);
+      }
+    );
+
+    upstreamReq.on("error", (err) => {
+      if (res.headersSent) {
+        res.destroy(err);
+        return;
+      }
+      res.statusCode = 502;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "Upstream request failed.", details: String(err) }));
     });
 
-    res.statusCode = upstream.status;
-
-    upstream.headers.forEach((value, key) => {
-      const lower = key.toLowerCase();
-      if (HOP_BY_HOP_HEADERS.has(lower)) return;
-      if (lower === "set-cookie") return;
-      res.setHeader(key, value);
-    });
-
-    if (!upstream.body) {
-      res.end();
-      return;
-    }
-
-    // Stream the response to avoid buffering edge cases with chunked bodies.
-    Readable.fromWeb(upstream.body).pipe(res);
+    if (body) upstreamReq.write(body);
+    upstreamReq.end();
   } catch (err) {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
