@@ -19,7 +19,7 @@ function getBackendBaseUrl() {
       "").trim();
 
   if (!raw) return "";
-  return raw.replace(/\/+$|\s+$/g, "").replace(/\/+$/, "");
+  return raw.replace(/\/+$/, "");
 }
 
 module.exports = async (req, res) => {
@@ -87,11 +87,6 @@ module.exports = async (req, res) => {
   } catch (err) {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
-    res.end(
-      JSON.stringify({
-        error: "Upstream request failed.",
-        details: String(err),
-      })
-    );
+    res.end(JSON.stringify({ error: "Upstream request failed.", details: String(err) }));
   }
 };
