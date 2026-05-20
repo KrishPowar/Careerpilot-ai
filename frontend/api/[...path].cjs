@@ -19,7 +19,7 @@ function getBackendBaseUrl() {
       "").trim();
 
   if (!raw) return "";
-  return raw.replace(/\/+$/, "");
+  return raw.replace(/\/+$|\s+$/g, "").replace(/\/+$/, "");
 }
 
 module.exports = async (req, res) => {
@@ -36,11 +36,12 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const pathParts = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean);
+  const pathParts = Array.isArray(req.query.path)
+    ? req.query.path
+    : [req.query.path].filter(Boolean);
   const forwardPath = pathParts.join("/");
 
   const searchParams = new URL(req.url, "http://localhost").searchParams;
-  // Remove the dynamic catch-all param from the query string, if present.
   searchParams.delete("path");
   const qs = searchParams.toString();
 
@@ -54,7 +55,6 @@ module.exports = async (req, res) => {
     headers[key] = value;
   }
 
-  // Preserve client IP chain (useful for logging / rate limiting)
   headers["x-forwarded-host"] = req.headers["host"];
   headers["x-forwarded-proto"] = req.headers["x-forwarded-proto"] || "https";
 
@@ -78,7 +78,6 @@ module.exports = async (req, res) => {
     upstream.headers.forEach((value, key) => {
       const lower = key.toLowerCase();
       if (HOP_BY_HOP_HEADERS.has(lower)) return;
-      // Avoid leaking backend host cookies onto the frontend domain.
       if (lower === "set-cookie") return;
       res.setHeader(key, value);
     });
@@ -88,6 +87,11 @@ module.exports = async (req, res) => {
   } catch (err) {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Upstream request failed.", details: String(err) }));
+    res.end(
+      JSON.stringify({
+        error: "Upstream request failed.",
+        details: String(err),
+      })
+    );
   }
 };
