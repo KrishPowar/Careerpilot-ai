@@ -33,6 +33,10 @@ def create_app():
     app.register_blueprint(analysis_bp, url_prefix="/api")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
+    @app.get("/health")
+    def health_root():
+        return jsonify({"status": "ok"})
+
     @app.get("/api/health")
     def health():
         return jsonify({"status": "ok", "service": "CareerPilot AI"})
@@ -55,10 +59,25 @@ def create_app():
 
 def _cors_origins():
     configured = os.getenv("FRONTEND_ORIGINS") or os.getenv("FRONTEND_ORIGIN")
+    frontend_url = (os.getenv("FRONTEND_URL") or "").strip()
     if configured:
-        return [origin.strip() for origin in configured.split(",") if origin.strip()]
+        origins = []
+        for item in configured.split(","):
+            value = item.strip()
+            if not value:
+                continue
+            if value.startswith("re:"):
+                pattern = value.removeprefix("re:").strip()
+                if pattern:
+                    origins.append(re.compile(pattern))
+            else:
+                origins.append(value)
+        return origins
+    if frontend_url:
+        return [frontend_url]
     if os.getenv("FLASK_ENV") == "production":
-        return ["http://localhost:5173"]
+        # In production you should explicitly set FRONTEND_URL or FRONTEND_ORIGINS.
+        return []
     return [
         re.compile(r"^http://localhost:\d+$"),
         re.compile(r"^http://127\.0\.0\.1:\d+$"),
