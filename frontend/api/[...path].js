@@ -8,7 +8,10 @@ const HOP_BY_HOP_HEADERS = new Set([
   "transfer-encoding",
   "upgrade",
   "host",
+  "content-length",
 ]);
+
+const { Readable } = require("node:stream");
 
 function getBackendBaseUrl() {
   const raw =
@@ -82,8 +85,13 @@ module.exports = async (req, res) => {
       res.setHeader(key, value);
     });
 
-    const buf = Buffer.from(await upstream.arrayBuffer());
-    res.end(buf);
+    if (!upstream.body) {
+      res.end();
+      return;
+    }
+
+    // Stream the response to avoid buffering edge cases with chunked bodies.
+    Readable.fromWeb(upstream.body).pipe(res);
   } catch (err) {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
